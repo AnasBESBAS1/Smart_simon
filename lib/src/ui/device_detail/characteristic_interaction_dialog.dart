@@ -90,10 +90,12 @@ class _CharacteristicInteractionDialogState
   }
 
   Future<void> readCharacteristic() async {
-    final result = await widget.readCharacteristic(widget.characteristic);
-    setState(() {
-      readOutput = result.toString();
-    });
+    while (true) {
+      final result = await widget.readCharacteristic(widget.characteristic);
+      setState(() {
+        readOutput = result.toString();
+      });
+    }
   }
 
   List<int> _parseInput() => textEditingController.text
@@ -122,43 +124,8 @@ class _CharacteristicInteractionDialogState
         style: const TextStyle(fontWeight: FontWeight.bold),
       );
 
-  List<Widget> get writeSection => [
-        sectionHeader('Write characteristic'),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: TextField(
-            controller: textEditingController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Value',
-            ),
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: false,
-            ),
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            ElevatedButton(
-              onPressed: writeCharacteristicWithResponse,
-              child: const Text('With response'),
-            ),
-            ElevatedButton(
-              onPressed: writeCharacteristicWithoutResponse,
-              child: const Text('Without response'),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsetsDirectional.only(top: 8.0),
-          child: Text('Output: $writeOutput'),
-        ),
-      ];
-
   List<Widget> get readSection => [
-        sectionHeader('Read characteristic'),
+        sectionHeader('Data from Nano'),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -167,6 +134,7 @@ class _CharacteristicInteractionDialogState
               child: const Text('Read'),
             ),
             Text('Output: $readOutput'),
+            Text(subscribeOutput),
           ],
         ),
       ];
@@ -197,22 +165,8 @@ class _CharacteristicInteractionDialogState
           child: ListView(
             shrinkWrap: true,
             children: [
-              const Text(
-                'Select an operation',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  widget.characteristic.characteristicId.toString(),
-                ),
-              ),
               divider,
               ...readSection,
-              divider,
-              ...writeSection,
-              divider,
-              ...subscribeSection,
               divider,
               Align(
                 alignment: Alignment.bottomRight,

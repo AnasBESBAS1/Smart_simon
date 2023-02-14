@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-
 class Simon extends StatefulWidget {
   const Simon({Key? key}) : super(key: key);
 
@@ -47,7 +46,9 @@ class _SimonState extends State<Simon> {
     });
   }
 
-  void setVisibility() {}
+  bool compare(int a, int b) {
+    return a == b;
+  }
 
   List<int> enlargeSequence(List<int> list) {
     Random rng = Random();
@@ -55,6 +56,12 @@ class _SimonState extends State<Simon> {
     var list2 = list;
     list2.add(num);
     return list2;
+  }
+
+  void validate(int progGesture, int userGesture){
+    if (compare(progGesture, userGesture)){
+
+    }
   }
 
   // 0 -> stable
@@ -158,10 +165,12 @@ class _SimonState extends State<Simon> {
         children: [
           Text(
             text,
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 40
-            ),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.red, fontSize: 40),
           ),
-          SizedBox(height: 20,),
+          SizedBox(
+            height: 20,
+          ),
           Container(
             child: Visibility(
               visible: visUp,

@@ -95,17 +95,7 @@ class _DeviceListState extends State<_DeviceList> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  const Text('Service UUID (2, 4, 16 bytes):'),
-                  TextField(
-                    controller: _uuidController,
-                    enabled: !widget.scannerState.scanIsInProgress,
-                    decoration: InputDecoration(
-                        errorText:
-                            _uuidController.text.isEmpty || _isValidUuidInput()
-                                ? null
-                                : 'Invalid UUID format'),
-                    autocorrect: false,
-                  ),
+
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,11 +122,7 @@ class _DeviceListState extends State<_DeviceList> {
             Flexible(
               child: ListView(
                 children: [
-                  SwitchListTile(
-                    title: const Text("Verbose logging"),
-                    value: widget.verboseLogging,
-                    onChanged: (_) => setState(widget.toggleVerboseLogging),
-                  ),
+
                   ListTile(
                     title: Text(
                       !widget.scannerState.scanIsInProgress
