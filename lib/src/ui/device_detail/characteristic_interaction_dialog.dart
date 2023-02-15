@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -61,6 +62,17 @@ class _CharacteristicInteractionDialogState
   late String subscribeOutput;
   late TextEditingController textEditingController;
   late StreamSubscription<List<int>>? subscribeStream;
+  var visUp = true;
+  var visDown = true;
+  var visLeft = true;
+  var visRight = true;
+  List<int> tab = [3, 2, 4];
+  var text = "stable";
+  final time_MS = 800;
+  List<int> bleTab = [];
+  bool backToStable = true;
+  bool isDifStable = true;
+  bool startGame = true;
 
   @override
   void initState() {
@@ -77,6 +89,148 @@ class _CharacteristicInteractionDialogState
     super.dispose();
   }
 
+  List<int> enlargeSequence(List<int> list) {
+    Random rng = Random();
+    var r = 0;
+    do {
+      r = rng.nextInt(4);
+    } while (r == 0);
+    var list2 = list;
+    list2.add(r);
+    return list2;
+  }
+
+  bool compare(int a, int b) {
+    return a == b;
+  }
+
+  Future<void> showRight() async {
+    await Future.delayed(Duration(milliseconds: time_MS), () {
+      setState(() {
+        visDown = false;
+        visRight = true;
+        visUp = false;
+        visLeft = false;
+        text = "right";
+      });
+    });
+  }
+
+  Future<void> showDown() async {
+    await Future.delayed(Duration(milliseconds: time_MS), () {
+      setState(() {
+        visDown = true;
+        visRight = false;
+        visUp = false;
+        visLeft = false;
+        text = "down";
+      });
+    });
+  }
+
+  Future<void> showLeft() async {
+    await Future.delayed(Duration(milliseconds: time_MS), () {
+      setState(() {
+        visDown = false;
+        visRight = false;
+        visUp = false;
+        visLeft = true;
+        text = "left";
+      });
+    });
+  }
+
+  Future<void> showUp() async {
+    await Future.delayed(Duration(milliseconds: time_MS), () {
+      setState(() {
+        visDown = false;
+        visRight = false;
+        visUp = true;
+        visLeft = false;
+        text = "up";
+      });
+    });
+  }
+
+  Future<void> showSequence() async {
+    for (var element in tab) {
+      switch (element) {
+        case 0:
+          await Future.delayed(Duration(milliseconds: time_MS), () {
+            setState(() {
+              visDown = true;
+              visRight = true;
+              visUp = true;
+              visLeft = true;
+              text = "stable";
+            });
+          });
+          break;
+        case 4:
+          await Future.delayed(Duration(milliseconds: time_MS), () {
+            setState(() {
+              visDown = false;
+              visRight = true;
+              visUp = false;
+              visLeft = false;
+              text = "right";
+            });
+          });
+
+          break;
+        case 2:
+          await Future.delayed(Duration(milliseconds: time_MS), () {
+            setState(() {
+              visDown = false;
+              visRight = false;
+              visUp = false;
+              visLeft = true;
+              text = "left";
+            });
+          });
+
+          break;
+        case 1:
+          await Future.delayed(Duration(milliseconds: time_MS), () {
+            setState(() {
+              visDown = false;
+              visRight = false;
+              visUp = true;
+              visLeft = false;
+              text = "up";
+            });
+          });
+
+          break;
+        case 3:
+          await Future.delayed(Duration(milliseconds: time_MS), () {
+            setState(() {
+              visDown = true;
+              visRight = false;
+              visUp = false;
+              visLeft = false;
+              text = "down";
+            });
+          });
+      }
+      await showAll();
+    }
+    setState(() {
+      text = "Start";
+    });
+  }
+
+  Future<void> showAll() async {
+    await Future.delayed(Duration(milliseconds: time_MS), () {
+      setState(() {
+        visDown = true;
+        visRight = true;
+        visUp = true;
+        visLeft = true;
+      });
+    });
+  }
+
   Future<void> subscribeCharacteristic() async {
     subscribeStream =
         widget.subscribeToCharacteristic(widget.characteristic).listen((event) {
@@ -89,12 +243,122 @@ class _CharacteristicInteractionDialogState
     });
   }
 
+  int validate(int seqGesture, int userGesture, int index) {
+    if (compare(seqGesture, userGesture)) {
+      if (index == tab.length - 1) {
+        return -200; // call enlargeSequence
+      }
+      return tab[index]; // is valid
+    }
+    return -1;
+  }
+
   Future<void> readCharacteristic() async {
     while (true) {
       final result = await widget.readCharacteristic(widget.characteristic);
-      setState(() {
-        readOutput = result.toString();
-      });
+      var guest = result.toString();
+      guest = guest[1];
+      if (guest != "0" && backToStable) {
+        setState(() {
+          backToStable = false;
+          bleTab.add(int.parse(guest));
+        });
+        print(guest);
+        var i = bleTab.length - 1;
+        var val = validate(tab[i], bleTab[i], i);
+        if (val == -1) {
+          setState(() {
+            text = "you lost";
+            startGame = true;
+          });
+          return;
+        } else if (val == -200) {
+          switch (val) {
+            case 1:
+              await showUp();
+              break;
+            case 2:
+              await showLeft();
+              break;
+            case 3:
+              await showDown();
+              break;
+            case 4:
+              await showRight();
+              break;
+          }
+          await showAll();
+          setState(() {
+            text = "level up";
+            tab = enlargeSequence(tab);
+            startGame = true;
+          });
+          return;
+        } else {
+          switch (val) {
+            case 1:
+              await showUp();
+              break;
+            case 2:
+              await showLeft();
+              break;
+            case 3:
+              await showDown();
+              break;
+            case 4:
+              await showRight();
+              break;
+          }
+          await showAll();
+        }
+      } else {
+        if (guest == "0" && !backToStable) {
+          setState(() {
+            backToStable = true;
+          });
+        }
+      }
+      // setState(() {
+      //   readOutput = result.toString();
+      //   readOutput = readOutput[1];
+      //   switch (readOutput) {
+      //     case "0":
+      //       visDown = true;
+      //       visRight = true;
+      //       visUp = true;
+      //       visLeft = true;
+      //       text = "stable";
+      //       break;
+      //     case "1":
+      //       visDown = false;
+      //       visRight = false;
+      //       visUp = true;
+      //       visLeft = false;
+      //       text = "up";
+      //       break;
+      //     case "2":
+      //       visDown = false;
+      //       visRight = false;
+      //       visUp = false;
+      //       visLeft = true;
+      //       text = "left";
+      //       break;
+      //     case "3":
+      //       visDown = true;
+      //       visRight = false;
+      //       visUp = false;
+      //       visLeft = false;
+      //       text = "down";
+      //       break;
+      //     case "4":
+      //       visDown = false;
+      //       visRight = true;
+      //       visUp = false;
+      //       visLeft = false;
+      //       text = "right";
+      //       break;
+      //   }
+      // });
     }
   }
 
@@ -125,16 +389,86 @@ class _CharacteristicInteractionDialogState
       );
 
   List<Widget> get readSection => [
-        sectionHeader('Data from Nano'),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            ElevatedButton(
-              onPressed: readCharacteristic,
-              child: const Text('Read'),
+            Visibility(
+              visible: startGame,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, // Background color
+                ),
+                onPressed: () async {
+                  await subscribeCharacteristic();
+                  setState(() {
+                    startGame = false;
+                  });
+                  await showSequence();
+                  setState(() {
+                    text = "Go";
+                  });
+                  await readCharacteristic();
+                },
+                child: const Text('Start Game'),
+              ),
             ),
-            Text('Output: $readOutput'),
-            Text(subscribeOutput),
+            SizedBox(
+              height: 10,
+            ),
+            Text(
+              text,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, color: Colors.red, fontSize: 30),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Visibility(
+              visible: visUp,
+              child: const Icon(
+                Icons.arrow_circle_up,
+                color: Colors.green,
+                size: 100.0,
+              ),
+            ),
+            const SizedBox(
+              height: 16,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Visibility(
+                  visible: visLeft,
+                  child: const Icon(
+                    Icons.arrow_circle_left,
+                    color: Colors.red,
+                    size: 100.0,
+                  ),
+                ),
+                const SizedBox(
+                  width: 60,
+                ),
+                Visibility(
+                  visible: visRight,
+                  child: const Icon(
+                    Icons.arrow_circle_right,
+                    color: Colors.yellow,
+                    size: 100.0,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            Visibility(
+              visible: visDown,
+              child: const Icon(
+                Icons.arrow_circle_down,
+                color: Colors.blue,
+                size: 100.0,
+              ),
+            ),
           ],
         ),
       ];

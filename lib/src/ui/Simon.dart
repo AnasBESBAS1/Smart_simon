@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
 
 class Simon extends StatefulWidget {
   const Simon({Key? key}) : super(key: key);
@@ -19,35 +18,12 @@ class _SimonState extends State<Simon> {
   var text = "stable";
   late Stream<List<int>> _characteristicValueStream;
 
-  var _value;
-
-  void _connectToBLE() async {
-    FlutterBlue.instance.state.listen((state) async {
-      if (state == BluetoothDeviceState.connected) {
-        final connectedDevices = await FlutterBlue.instance.connectedDevices;
-        if (connectedDevices.isNotEmpty) {
-          final device = connectedDevices.first;
-          final services = await device.discoverServices();
-          if (services.isNotEmpty) {
-            final service = services.first;
-            final characteristics = await service.characteristics;
-            if (characteristics.isNotEmpty) {
-              final characteristic = characteristics.first;
-              _characteristicValueStream = characteristic.value;
-              _characteristicValueStream.listen((data) {
-                if (data.length > 0) {
-                  _value = String.fromCharCode(data[0]);
-                }
-              });
-            }
-          }
-        }
-      }
-    });
-  }
-
   bool compare(int a, int b) {
     return a == b;
+  }
+
+  bool backToStable(gus){
+    return gus != "0";
   }
 
   List<int> enlargeSequence(List<int> list) {
@@ -58,10 +34,18 @@ class _SimonState extends State<Simon> {
     return list2;
   }
 
-  void validate(int progGesture, int userGesture){
-    if (compare(progGesture, userGesture)){
-
+  int validate(int seqGesture, int userGesture, int index){
+    if (compare(seqGesture, userGesture)){
+      if (index == tab.length-1){
+        return -200; // call enlargeSequence
+      }
+      return tab[index]; // is valid
     }
+    return -1;
+  }
+
+  void decision(int liveData){
+
   }
 
   // 0 -> stable
@@ -72,11 +56,9 @@ class _SimonState extends State<Simon> {
 
   Future<void> showSequence() async {
     for (var element in tab) {
-      print(element);
       switch (element) {
         case 0:
-          print("here");
-          await Future.delayed(Duration(seconds: 1), () {
+          await Future.delayed(const Duration(seconds: 1), () {
             setState(() {
               visDown = true;
               visRight = true;
@@ -87,7 +69,7 @@ class _SimonState extends State<Simon> {
           });
           break;
         case 1:
-          await Future.delayed(Duration(seconds: 1), () {
+          await Future.delayed(const Duration(seconds: 1), () {
             setState(() {
               visDown = false;
               visRight = true;
@@ -99,7 +81,7 @@ class _SimonState extends State<Simon> {
 
           break;
         case 2:
-          await Future.delayed(Duration(seconds: 1), () {
+          await Future.delayed(const Duration(seconds: 1), () {
             setState(() {
               visDown = false;
               visRight = false;
@@ -111,7 +93,7 @@ class _SimonState extends State<Simon> {
 
           break;
         case 3:
-          await Future.delayed(Duration(seconds: 1), () {
+          await Future.delayed(const Duration(seconds: 1), () {
             setState(() {
               visDown = false;
               visRight = false;
@@ -123,7 +105,7 @@ class _SimonState extends State<Simon> {
 
           break;
         case 4:
-          await Future.delayed(Duration(seconds: 1), () {
+          await Future.delayed(const Duration(seconds: 1), () {
             setState(() {
               visDown = true;
               visRight = false;
@@ -142,7 +124,6 @@ class _SimonState extends State<Simon> {
 
   @override
   Widget build(BuildContext context) {
-    _connectToBLE();
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(

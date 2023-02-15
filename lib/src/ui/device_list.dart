@@ -126,7 +126,7 @@ class _DeviceListState extends State<_DeviceList> {
                   ListTile(
                     title: Text(
                       !widget.scannerState.scanIsInProgress
-                          ? 'Enter a UUID above and tap start to begin scanning'
+                          ? ''
                           : 'Tap a device to connect to it',
                     ),
                     trailing: (widget.scannerState.scanIsInProgress ||
